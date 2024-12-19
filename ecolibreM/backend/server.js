@@ -1,46 +1,32 @@
 // backend/server.js
 
 const express = require('express');
-const axios = require('axios');
 const cors = require('cors');
+const financeRoutes = require('./routes/finance');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+
+// Rutas
+app.use('/api/finanzas', financeRoutes);
 
 // Ruta de prueba
 app.get('/', (req, res) => {
     res.send('Bienvenido a EcoLibreM Backend');
 });
 
-// Ruta para obtener datos financieros
-app.get('/api/finanzas', async (req, res) => {
-    const { symbol } = req.query;
-    const API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
-
-    if (!symbol) {
-        return res.status(400).json({ error: 'Se requiere el parámetro "symbol"' });
-    }
-
-    try {
-        const response = await axios.get(`https://www.alphavantage.co/query`, {
-            params: {
-                function: 'TIME_SERIES_DAILY',
-                symbol: symbol,
-                apikey: API_KEY
-            }
-        });
-
-        res.json(response.data);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error al obtener datos financieros' });
-    }
-});
-
+// Iniciar el servidor con manejo de errores
 app.listen(PORT, () => {
     console.log(`Servidor backend corriendo en el puerto ${PORT}`);
+}).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`El puerto ${PORT} ya está en uso. Por favor, cambia el puerto en el archivo .env.`);
+    } else {
+        console.error(err);
+    }
 });
